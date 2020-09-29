@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo Manager</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="m-4 text-center">My Todo</h1>
+        <!-- create todo list -->
+        <div class="text-center">
+            <form action="/addTodo" method="POST">
+
+                <input type="text" class="form-control" name="title" placeholder="Title" required><br>
+
+                <input type="text" class="form-control" name="description" placeholder="Description" required><br>
+
+                <button type="submit" class="btn btn-success">Add ToDo</button>
+
+            </form>
+        </div>
+
+
+        <h3>My Tasks</h3>
+        <div id="tasks">
+        </div>
+        <div id="update-task">
+
+        </div>
+
+        <script>
+            // read data or get from database
+            const loadAllTasks = () => {
+                fetch('/todo')
+                    .then(response => response.json())
+                    .then(data => {
+                        const tasks = document.getElementById('tasks');
+                        tasks.innerHTML = '';
+                        data.forEach(task => {
+                            const p = document.createElement('p');
+                            p.innerHTML = `<strong>Title:</strong> ${task.title} <strong>Description:</strong> ${task.description}
+
+                            <button type="button" class="btn btn-danger" onclick="deleteTask(event,'${task._id}')">Delete</button>
+
+                            <button type="button" class="btn btn-info" onclick="loadTask('${task._id}')">Update</button>`
+                            tasks.appendChild(p);
+                        });
+                    })
+
+            }
+            loadAllTasks();
+
+            // delete
+            const deleteTask = (event, id) => {
+
+                fetch(`/delete/${id}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result) {
+                            event.target.parentNode.style.display = 'none'
+                        }
+                    })
+            }
+
+            // update Task section 
+            const loadTask = (id) => {
+
+                fetch(`/loadTask/${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const { title, description, _id } = data;
+                        const updateTask = document.getElementById('update-task')
+                        updateTask.innerHTML = `<input type="text" class="form-control" id="title" placeholder="Description" value="${title}" required><br>
+
+                    <input type="text" class="form-control" id="description" placeholder="Description" value="${description}" required><br>
+                    
+                    <button type="button" class="btn btn-success" onclick="updateTask('${_id}')">Update</button>`
+                    })
+            }
+            // update
+            const updateTask = (id) => {
+                const title = document.getElementById('title').value;
+                const description = document.getElementById('description').value;
+                const todo = { title, description, id }
+
+                fetch(`/update/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8'
+                    },
+                    body: JSON.stringify(todo)
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result) {
+                            loadAllTasks();
+                            const updateTask = document.getElementById('update-task')
+                            updateTask.innerHTML = '';
+                        }
+                    })
+            }
+
+        </script>
+    </div>
+</body>
+
+</html>
